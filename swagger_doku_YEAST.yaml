@@ -1,0 +1,2268 @@
+openapi: 3.0.0
+info:
+  title: Oculyze Yeast API
+  description: Summarizes all available endpoints for creating, editing and displaying single analysis & trackings in BB and FW.
+  version: 0.0.0
+servers:
+  - url: https://stagingsrv.oculyze.de/services/handler/v1/
+  - url: https://srv.oculyze.de/services/handler/v1/
+tags:
+  - name: yeast
+    description: Everything about single Analysis (FW & BB) and trackings (BB)
+  - name: fw tracking
+    description: Everything about trackings in FW
+  - name: seperate tags
+    description: Seperate Tag endpoints currently used in BB 
+paths:
+  /batches:
+    post:
+      tags:
+      - yeast
+      summary: Create a batch
+      description: Create a batch that holds different information (e.g name, dilution...) for an analysis. 
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: query
+          name: method
+          required: true
+          description: 30 - YEAST_2_CONC_VIAB (Beer yeast analysis for concentration & viability); 31 - YEAST_2_CONC (Beer yeast analysis for only concentration); 32 - YEAST_2_CONC_BRETT (Beer yeast analysis specific for Brettanomyces; only analyzes concentration); 4  - YEAST_MANUAL_CNT (Cells are counted by hand. No image analysis is started), 40 - WINE_CONC_VIAB (Wine yeast analysis for concentration & viability), 41 - WINE_CONC (Wine yeast analysis for concentration), 42 - WINE_CONC_BRETT (Wine yeast analysis specific for Brettanomyces type; only analyzes concentration), 43 - WINE_MANUAL_CNT (Cells are counted by hand. No image recognition is started), 1 - Deprecated YEAST_CONC of BB1, 2 - DEPRECATED YEAST_CONC_VIAB of BB1
+          schema:
+            type: integer
+        - in: query
+          name: name
+          required: false
+          description: Name of analysis
+          schema:
+            type: string
+        - in: query
+          name: desc
+          required: false
+          description: Additional descriptions for analysis
+          schema:
+            type: string
+        - in: query
+          name: app_version
+          required: false
+          description: app_version
+          schema:
+            type: string
+        - in: query
+          name: created_locally_at
+          required: false
+          description: created_locally_at
+          schema:
+            type: string
+        - in: query
+          name: fermented_at
+          required: false
+          description: fermented_at
+          schema:
+            type: string
+        - in: query
+          name: method_attributes
+          required: false
+          description: 'Allows to set stain and size ranges of the analysis: 1 - S (default in FW), 2 - M (default in BB), 3 - L, 4 - ALL and stain: 1 - Methylene Blue, 2 - Methylene Violet (default); usage {"analysis_level": "1", "stain": "2"}'
+          schema:
+            type: string
+        - in: query
+          name: oculyze_app_id
+          required: false
+          description: Specify which application is used. 1 - BB1, 2 - BB2, 3 - MUH, 4 - FW/WINE, 5 - GENERIC
+          schema:
+            type: integer
+        - in: query
+          name: tags
+          required: false
+          description: 'Add different tags as tag:label pair to a measurement - usage example {"tag": {"yeast": ["Belgian-Mix-10"], "beer": ["ale"], "tank": ["12"]}}'
+          schema:
+            type: string
+        - in: query
+          name: oculyze_device_mmsdk
+          required: false
+          description: '3 separate fields (Build.MANUFACTURER, Build.MODEL and Build.VERSION.SDK_INT) identifying the client device; usage example Huawei:Mate40:30.0.5'
+          schema:
+            type: string
+        - in: query
+          name: state
+          required: false
+          description: States are set by the backend to ensure a proper flow of the processing; client site sets only state 1 after all tasks are added to the batch to trigger further progress on the backend e.g. result aggregation. -1 - ERROR, 0 - IN_PROGRESS, 1 - UPLOAD_COMPLETE, 2 - RESULT_READY , 254 - ABORTED_BY_USER, 255 - ABORTED_BY_SYSTEM
+          schema:
+            type: integer
+        - in: query
+          name: image_volume
+          required: false
+          description: Specify the volume of the analysed image, calculated on client side. batch.image_volume = (calculateImageArea() * UserHelper.manager().getChamberHeight()) / 1000;
+          schema:
+            type: integer
+        - in: query
+          name: dilution_sample_1
+          required: false
+          description: Specify the sample part when diluting the sample, e.g. 1
+          schema:
+            type: integer
+        - in: query
+          name: dilution_sample_2
+          required: false
+          description: Specify the water part when diluting the sample, e.g. 99
+          schema:
+            type: integer
+        - in: query
+          name: dilution_stain_1
+          required: false
+          description: Specify the sample part when staining the sample, e.g. 1
+          schema:
+            type: integer
+        - in: query
+          name: dilution_stain_2
+          required: false
+          description: Specify the stain part when stainig the sample, e.g. 1
+          schema:
+            type: integer
+        - in: query
+          name: dilution_sample
+          required: false
+          description: Specify the sample dilution by vol_sample / (vol_sample + vol_water)
+          deprecated: true
+          schema:
+            type: integer
+        - in: query
+          name: dilution_stain
+          required: false
+          description: Specify the sample dilution of the stain by by vol_sample_dil / (vol_sample_dil + vol_stain)
+          deprecated: true
+          schema:
+            type: integer
+        - in: query
+          name: density
+          required: false
+          description: TODO
+          schema:
+            type: integer
+        - in: query
+          name: turbidity
+          required: false
+          description: TODO
+          schema:
+            type: integer
+        - in: query
+          name: temperature
+          required: false
+          description: TODO
+          schema:
+            type: integer
+        - in: query
+          name: scale_type
+          required: false
+          description: ONLY FW - 0 Oechsle, 1 Brix (default), 2 KMW, 3 BAUME, 4 DENSITY_GPL (gpl stands for gramm per liter)
+          schema:
+            type: integer
+      responses:
+        '201':    # status code
+          description: A JSON array containing infos on the batch
+    get:
+      tags:
+      - yeast
+      summary: Read informations on existing batches
+      description: Read informations on existing batches and filter for different parameters.
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - name: If-Modified-Since
+          in: header
+          description: 'filter for batches since included date. Example -  Fri, 23 Sep 2022 00:00:00 GMT'
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: name
+          required: false
+          description: filter for a name
+          schema:
+            type: string
+        - in: query
+          name: desc
+          required: false
+          description: filter for the description
+          schema:
+            type: string
+        - in: query
+          name: user_id
+          required: false
+          description: filter for a specific user id if you are admin of the concerned user group (for handling of multiple accounts)
+          schema:
+            type: string
+        - in: query
+          name: group
+          required: false
+          description: filter for specific groups, admin rights needed
+          schema:
+            type: string
+        - in: query
+          name: method
+          required: false
+          description: filter for a specific method
+          schema:
+            type: string
+        - in: query
+          name: methods
+          required: false
+          description: filter for a specific methods seperated by , e.g. 30,31
+          schema:
+            type: string
+        - in: query
+          name: method_attributes
+          required: false
+          description: 'filter for method_attributes, usage example - {"analysis_level": "1", "stain": "2"}'
+          schema:
+            type: string
+        - in: query
+          name: page
+          required: false
+          description: filter for the page number
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          description: specify the number of analysis per requested page
+          schema:
+            type: integer
+        - in: query
+          name: count
+          required: false
+          description: 'Get the count of the query result. default - false' 
+          schema:
+            type: boolean
+        - in: query
+          name: state
+          required: false
+          description: filter for specific state of the analysis -1 - ERROR, 0 - IN_PROGRESS, 1 - UPLOAD_COMPLETE, 2 - RESULT_READY , 254 - ABORTED_BY_USER, 255 - ABORTED_BY_SYSTEM
+          schema:
+            type: integer
+        - in: query
+          name: states
+          required: false
+          description: filter for different states of the analysis, mutually exclusive with parameter state, e.g. 1,2
+          schema:
+            type: string
+        - in: query
+          name: min_viability
+          required: false
+          description: filter for minimum viability
+          schema:
+            type: integer
+        - in: query
+          name: max_viability
+          required: false
+          description: filter for maximal viability
+          schema:
+            type: integer
+        - in: query
+          name: min_concentration
+          required: false
+          description: filter for minimum concentration
+          schema:
+            type: integer
+        - in: query
+          name: max_concentration
+          required: false
+          description: filter for maximal concentration
+          schema:
+            type: integer
+        - in: query
+          name: st_date_creation
+          required: false
+          description: 'filter for earliest date e.g. Tue, 23 Feb 2021 11:43:00 GMT or 20220301 '
+          schema:
+            type: string
+        - in: query
+          name: end_date_creation
+          required: false
+          description: 'filter for latest date e.g. Tue, 23 Feb 2021 11:43:00 GMT or 20220307'
+          schema:
+            type: integer
+        - in: query
+          name: oculyze_app_id
+          required: false
+          description: Filter for used application. 1 - BB1, 2 - BB2, 3 - MUH, 4 - FW/WINE, 5 - GENERIC
+          schema:
+            type: integer
+        - in: query
+          name: tags
+          required: false
+          description: TODO - Does this do anything?
+          schema:
+            type: string
+        - in: query
+          name: tag_search_key
+          required: false
+          description: 'Filter for tags of trackings - currently its only possible to filter for one tag:label pair at the time - yeast_generation": ["1"]; currently fixed tags - tank, yeast_strain, yeast_generation, yeast_brand' 
+          schema:
+            type: string
+      responses:
+        '201':    # status code
+          description: A JSON array containing infos on the batch
+
+  /batches/{batch_id}:
+    put:
+      tags:
+      - yeast
+      summary: Modify a batch
+      description: Modify a batch that holds different information (e.g name, dilution...) for an analysis and trigger aggregation of results for the images (managed via tasks) assosiated with the batch. 
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: query
+          name: method
+          required: false
+          description: 30 - YEAST_2_CONC_VIAB (Beer yeast analysis for concentration & viability); 31 - YEAST_2_CONC (Beer yeast analysis for only concentration); 32 - YEAST_2_CONC_BRETT (Beer yeast analysis specific for Brettanomyces; only analyzes concentration); 4  - YEAST_MANUAL_CNT (Cells are counted by hand. No image analysis is started)
+          schema:
+            type: integer
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that should be modified
+          schema:
+            type: string
+        - in: query
+          name: name
+          required: false
+          description: Edit the name of an analysis
+          schema:
+            type: string
+        - in: query
+          name: desc
+          required: false
+          description: Edit the additional descriptions for analysis
+          schema:
+            type: string
+        - in: query
+          name: app_version
+          required: false
+          description: Edit the app_version
+          schema:
+            type: string
+        - in: query
+          name: created_locally_at
+          required: false
+          description: Edit the local creation time
+          schema:
+            type: string
+        - in: query
+          name: Edit fermented_at
+          required: false
+          description: fermented_at
+          schema:
+            type: string
+        - in: query
+          name: oculyze_app_id
+          required: false
+          description: Edit which application is used. 1 - BB1, 2 - BB2, 3 - MUH, 4 - FW/WINE, 5 - GENERIC
+          schema:
+            type: integer
+        - in: query
+          name: state
+          required: false
+          description: States are set by the backend to ensure a proper flow of the processing; client site sets only state 1 after all tasks are added to the batch to trigger further progress on the backend e.g. result aggregation. -1 - ERROR, 0 - IN_PROGRESS, 1 - UPLOAD_COMPLETE, 2 - RESULT_READY , 254 - ABORTED_BY_USER, 255 - ABORTED_BY_SYSTEM
+          schema:
+            type: integer
+        - in: query
+          name: image_volume
+          required: false
+          description: Edit the volume of the analysed image, calculated on client side. batch.image_volume = (calculateImageArea() * UserHelper.manager().getChamberHeight()) / 1000;
+          schema:
+            type: integer
+        - in: query
+          name: dilution_sample_1
+          required: false
+          description: Specify the sample part when diluting the sample, e.g. 1
+          schema:
+            type: integer
+        - in: query
+          name: dilution_sample_2
+          required: false
+          description: Specify the water part when diluting the sample, e.g. 99
+          schema:
+            type: integer
+        - in: query
+          name: dilution_stain_1
+          required: false
+          description: Specify the sample part when staining the sample, e.g. 1
+          schema:
+            type: integer
+        - in: query
+          name: dilution_stain_2
+          required: false
+          description: Specify the stain part when stainig the sample, e.g. 1
+          schema:
+            type: integer
+        - in: query
+          name: dilution_sample
+          required: false
+          description: Specify the sample dilution by vol_sample / (vol_sample + vol_water)
+          deprecated: true
+          schema:
+            type: integer
+        - in: query
+          name: dilution_stain
+          required: false
+          description: Specify the sample dilution of the stain by by vol_sample_dil / (vol_sample_dil + vol_stain)
+          deprecated: true
+          schema:
+            type: integer
+        - in: query
+          name: density
+          required: false
+          description: TODO
+          schema:
+            type: integer
+        - in: query
+          name: turbidity
+          required: false
+          description: TODO
+          schema:
+            type: integer
+        - in: query
+          name: temperature
+          required: false
+          description: TODO
+          schema:
+            type: integer
+        - in: query
+          name: scale_type
+          required: false
+          description: TODO
+          schema:
+            type: integer
+      responses:
+        '201':    # status code
+          description: A JSON array containing infos on the batch
+    get:
+      tags:
+      - yeast
+      summary: Read a batch
+      description: Read a batch that holds different information (e.g name, dilution, results...) for an analysis. 
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that should be read
+          schema:
+            type: string
+
+      responses:
+        '201':    # status code
+          description: A JSON array containing infos on the batch
+  
+  /batches/{batch_id}/tasks:
+    put:
+      tags:
+      - yeast
+      summary: Create a task
+      description: Create a task that holds single images and the assiciated results from image analysis
+      security: 
+        - oculyze_basic: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                manual_stat:
+                  description: 'add manual counting results, Example - {"countDead": 9, "countAlive": 31, "countOther": 1, "countTotal": 46}'
+                  type: string
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that holds the respective task
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: A JSON array containing infos on the task
+    get:
+      tags:
+      - yeast
+      summary: Read all tasks related to a batch
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that holds the respective task
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: A JSON array containing infos on the task
+  
+  /batches/{batch_id}/tasks/{task_id}:
+    get:
+      tags:
+      - yeast
+      summary: Read all informations of a task
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that holds the respective task
+          schema:
+            type: string
+        - in: path
+          name: task_id
+          required: true
+          description: task id of the task that should be read
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: A JSON array containing infos on the task
+    put:
+      tags:
+      - yeast
+      summary: Edit detections of a task
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that holds the respective task
+          schema:
+            type: string
+        - in: path
+          name: task_id
+          required: true
+          description: task id of the task that should be read
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                detections:
+                  description: 'detections that should be set for the task. Example - detections: [[0.0, 0.338181823, 0.87318182, 0.0245454554, 0.0204545446]]'
+                  type: string
+      responses:
+        '200':    # status code
+          description: A JSON array containing infos on the task
+  
+  /batches/{batch_id}/tasks/{task_id}/{field}:
+    get:
+      tags:
+      - yeast
+      summary: Read different informations of a task
+      description: Reads infos of single fields of the task (e.g id, result_stats or state)
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that holds the respective task
+          schema:
+            type: string
+        - in: path
+          name: task_id
+          required: true
+          description: task id of the task that should be read
+          schema:
+            type: string
+        - in: path
+          name: field
+          required: true
+          description: id, result_stats, state
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: A JSON array containing infos on the task
+          
+  /batches/{batch_id}/tasks/{task_id}/input_image:
+    get:
+      tags:
+      - yeast
+      summary: Download input image
+      description: Download the input image of a task in different sizes
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that holds the respective task
+          schema:
+            type: string
+        - in: path
+          name: task_id
+          required: true
+          description: task id of the task that should be read
+          schema:
+            type: string
+        - in: query
+          name: size
+          required: false
+          description: set to 'thumbnail' to get a smaller version
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: A jpeg image
+          
+  /batches/{batch_id}/tasks/{task_id}/result_image:
+    get:
+      tags:
+      - yeast
+      summary: Download result image
+      description: Download the result image of a task in different sizes
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that holds the respective task
+          schema:
+            type: string
+        - in: path
+          name: task_id
+          required: true
+          description: task id of the task that should be read
+          schema:
+            type: string
+        - in: query
+          name: size
+          required: false
+          description: set to 'thumbnail' to get a smaller version
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: A jpeg image
+          
+  /fermentation:
+    post:
+      tags:
+      - yeast
+      summary: Create a primary batch
+      description: Create a primary batch that holds different information (e.g name, tags...) of a tracking. Primary batches hold all batches added to a tracking.
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: query
+          name: method
+          required: true
+          description: HAS TO BE SET BUT IS NOT USED LATER! 30 - YEAST_2_CONC_VIAB (Beer yeast analysis for concentration & viability); 31 - YEAST_2_CONC (Beer yeast analysis for only concentration); 32 - YEAST_2_CONC_BRETT (Beer yeast analysis specific for Brettanomyces; only analyzes concentration); 4  - YEAST_MANUAL_CNT (Cells are counted by hand. No image analysis is started), 40 - WINE_CONC_VIAB (Wine yeast analysis for concentration & viability), 41 - WINE_CONC (Wine yeast analysis for concentration), 42 - WINE_CONC_BRETT (Wine yeast analysis specific for Brettanomyces type; only analyzes concentration), 43 - WINE_MANUAL_CNT (Cells are counted by hand. No image recognition is started), 1 - Deprecated YEAST_CONC of BB1, 2 - DEPRECATED YEAST_CONC_VIAB of BB1
+          schema:
+            type: integer
+        - in: query
+          name: name
+          required: false
+          description: Name of analysis
+          schema:
+            type: string
+        - in: query
+          name: desc
+          required: false
+          description: Additional descriptions for analysis
+          schema:
+            type: string
+        - in: query
+          name: app_version
+          required: false
+          description: app_version
+          schema:
+            type: string
+        - in: query
+          name: created_locally_at
+          required: false
+          description: created_locally_at
+          schema:
+            type: string
+        - in: query
+          name: fermented_at
+          required: true
+          description: fermented_at e.g. Tue, 23 Feb 2021 11:43:00 GMT or 20220307
+          schema:
+            type: string
+        - in: query
+          name: method_attributes
+          required: false
+          description: 'Allows to set stain and size ranges of the analysis: 1 - S (default in FW), 2 - M (default in BB), 3 - L, 4 - ALL and stain: 1 - Methylene Blue, 2 - Methylene Violet (default); usage {"analysis_level": "1", "stain": "2"}'
+          schema:
+            type: string
+        - in: query
+          name: oculyze_app_id
+          required: false
+          description: Specify which application is used. 1 - BB1, 2 - BB2, 3 - MUH, 4 - FW/WINE, 5 - GENERIC
+          schema:
+            type: integer
+        - in: query
+          name: tags
+          required: false
+          description: 'Add different tags as tag:label pair to a measurement. usage example "tag": {"tank_volume": ["60 L"], "tank": ["3"], "yeast_brand": ["Erbslöh"], "yeast_strain": ["Freddo"], "yeast_generation": ["2"]}'
+          schema:
+            type: string
+        - in: query
+          name: oculyze_device_mmsdk
+          required: false
+          description: '3 separate fields (Build.MANUFACTURER, Build.MODEL and Build.VERSION.SDK_INT) identifying the client device; usage example Huawei:Mate40:30.0.5'
+          schema:
+            type: string
+        - in: query
+          name: scale_type
+          required: false
+          description: ONLY FW - 0 Oechsle, 1 Brix (default), 2 KMW, 3 BAUME, 4 DENSITY_GPL (gpl stands for gramm per liter)
+          schema:
+            type: integer
+      responses:
+        '200':    # status code
+          description: TODO
+    get: 
+      tags:
+      - yeast
+      summary: Read informations on existing primary batches
+      description: Read informations on existing primary batches and filter for different parameters.
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - name: If-Modified-Since
+          in: header
+          description: 'filter for primary batches since included date. Example -  Fri, 23 Sep 2022 00:00:00 GMT'
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: name
+          required: false
+          description: filter for a name
+          schema:
+            type: string
+        - in: query
+          name: desc
+          required: false
+          description: filter for the description
+          schema:
+            type: string
+        - in: query
+          name: user_id
+          required: false
+          description: filter for a specific user id if you are admin of the concerned user group (for handling of multiple accounts)
+          schema:
+            type: string
+        - in: query
+          name: group
+          required: false
+          description: filter for specific groups, admin rights needed
+          schema:
+            type: string
+        - in: query
+          name: method
+          required: false
+          description: filter for a specific method
+          schema:
+            type: string
+        - in: query
+          name: methods
+          required: false
+          description: filter for a specific methods seperated by , e.g. 30,31
+          schema:
+            type: string
+        - in: query
+          name: method_attributes
+          required: false
+          description: 'filter for method_attributes, usage example - {"analysis_level": "1", "stain": "2"}'
+          schema:
+            type: string
+        - in: query
+          name: page
+          required: false
+          description: filter for the page number
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          description: specify the number of analysis per requested page
+          schema:
+            type: integer
+        - in: query
+          name: count
+          required: false
+          description: 'Get the count of the query result. default - false' 
+          schema:
+            type: boolean
+        - in: query
+          name: state
+          required: false
+          description: filter for specific state of the primary batch - 4 - FERMENTATION_ONGOING, 5 - USER_FERMENTATION_COMPLETED, 6 - FERMENTATION_COMPLETE, -1 - ERROR, -254 - ABORTED_BY_USER, 255 - ABORTED_BY_SYSTEM
+          schema:
+            type: integer
+        - in: query
+          name: states
+          required: false
+          description: filter for different states of the analysis, mutually exclusive with parameter state, e.g. 1,2
+          schema:
+            type: string
+        - in: query
+          name: min_viability
+          required: false
+          description: filter for minimum viability
+          schema:
+            type: integer
+        - in: query
+          name: max_viability
+          required: false
+          description: filter for maximal viability
+          schema:
+            type: integer
+        - in: query
+          name: min_concentration
+          required: false
+          description: filter for minimum concentration
+          schema:
+            type: integer
+        - in: query
+          name: max_concentration
+          required: false
+          description: filter for maximal concentration
+          schema:
+            type: integer
+        - in: query
+          name: st_date_creation
+          required: false
+          description: 'filter for earliest date e.g. Tue, 23 Feb 2021 11:43:00 GMT or 20220301 '
+          schema:
+            type: string
+        - in: query
+          name: end_date_creation
+          required: false
+          description: 'filter for latest date e.g. Tue, 23 Feb 2021 11:43:00 GMT or 20220307'
+          schema:
+            type: integer
+        - in: query
+          name: oculyze_app_id
+          required: false
+          description: Filter for used application. 1 - BB1, 2 - BB2, 3 - MUH, 4 - FW/WINE, 5 - GENERIC
+          schema:
+            type: integer
+        - in: query
+          name: tags
+          required: false
+          description: TODO - Does this do anything?
+          schema:
+            type: string
+        - in: query
+          name: tag_search_key
+          required: false
+          description: 'Filter for tags of trackings - currently its only possible to filter for one tag:label pair at the time; usage - tank": ["3"]; currently fixed tags - tank, yeast_brand, yeast_strain, yeast_generation' 
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: TODO
+          
+  /fermentation/{primary_id}:
+    get:
+      tags:
+      - yeast
+      summary: Read all informations of a primary batch
+      description: Read all informations of a primary batch.
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: primary_id
+          required: true
+          description: id of the primary batch
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: TODO
+    put:
+      tags:
+      - yeast
+      summary: Update a primary batch
+      description: Update fields of a primary batch.
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: primary_id
+          required: true
+          description: id of the primary batch
+          schema:
+            type: string
+        - in: query
+          name: state
+          required: false
+          description: Set the state of a primary to finalize a fermentation (no batches can be added anymore). State can be reversed but client side this is currently not used. 6 - FERMENTATION_COMPLETE, 4 - FERMENTATION_ONGOING
+          schema:
+            type: integer
+        - in: query
+          name: name
+          required: false
+          description: edit the name
+          schema:
+            type: string
+        - in: query
+          name: desc
+          required: false
+          description: edit the description
+          schema:
+            type: string
+        - in: query
+          name: app_version
+          required: false
+          description: app_version
+          schema:
+            type: string
+        - in: query
+          name: created_locally_at
+          required: false
+          description: created_locally_at
+          schema:
+            type: string
+        - in: query
+          name: fermented_at
+          required: false
+          description: fermented_at e.g. Tue, 23 Feb 2021 11:43:00 GMT or 20220307
+          schema:
+            type: string
+        - in: query
+          name: oculyze_app_id
+          required: false
+          description: Specify which application is used. 1 - BB1, 2 - BB2, 3 - MUH, 4 - FW/WINE, 5 - GENERIC
+          schema:
+            type: integer
+        - in: query
+          name: tags
+          required: false
+          description: 'Add different tags as tag:label pair to a measurement - usage example { "tag": {"tank_volume": ["60 L"], "tank": ["3"], "yeast_brand": ["Erbslöh"], "yeast_strain": ["Freddo"], "yeast_generation": ["2"]}}'
+          schema:
+            type: string
+        - in: query
+          name: oculyze_device_mmsdk
+          required: false
+          description: '3 separate fields (Build.MANUFACTURER, Build.MODEL and Build.VERSION.SDK_INT) identifying the client device; usage example Huawei:Mate40:30.0.5'
+          schema:
+            type: string
+        - in: query
+          name: scale_type
+          required: false
+          description: ONLY FW - 0 Oechsle, 1 Brix (default), 2 KMW, 3 BAUME, 4 DENSITY_GPL (gpl stands for gramm per liter)
+          schema:
+            type: integer
+        - in: query
+          name: is_favourite
+          desription: mark the primary batch as a favorite batch 
+          required: false
+          schema:
+            type: boolean
+        - in: query
+          name: favourite_reference
+          description: store the id of anther primary batch the current one is compared to 
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: TODO
+          
+  /fermentation/favourites:
+    get: 
+      tags:
+      - yeast
+      summary: Read all favourite primary batches
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: query
+          name: method
+          required: false
+          description: filter for BB or FF favourites eg. BB, FW
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: TODO
+          
+  /fermentation/{primary_id}/batches:
+    post:
+      tags:
+      - yeast
+      summary: Create a batch associated to a primary
+      description: Create a batch that holds different information (e.g name, dilution...) for an analysis and is linked to a primary batch. 
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: primary_id
+          required: true
+          description: id of the primary batch
+          schema:
+            type: string
+        - in: query
+          name: method
+          required: true
+          description: 30 - YEAST_2_CONC_VIAB (Beer yeast analysis for concentration & viability); 31 - YEAST_2_CONC (Beer yeast analysis for only concentration); 32 - YEAST_2_CONC_BRETT (Beer yeast analysis specific for Brettanomyces; only analyzes concentration); 4  - YEAST_MANUAL_CNT (Cells are counted by hand. No image analysis is started),
+          schema:
+            type: integer
+        - in: query
+          name: name
+          required: false
+          description: Name of analysis
+          schema:
+            type: string
+        - in: query
+          name: desc
+          required: false
+          description: Additional descriptions for analysis
+          schema:
+            type: string
+        - in: query
+          name: app_version
+          required: false
+          description: app_version
+          schema:
+            type: string
+        - in: query
+          name: created_locally_at
+          required: false
+          description: created_locally_at
+          schema:
+            type: string
+        - in: query
+          name: fermented_at
+          required: false
+          description: fermented_at
+          schema:
+            type: string
+        - in: query
+          name: method_attributes
+          required: false
+          description: 'Allows to set stain and size ranges of the analysis: 1 - S (default in FW), 2 - M (default in BB), 3 - L, 4 - ALL and stain: 1 - Methylene Blue, 2 - Methylene Violet (default); usage {"analysis_level": "1", "stain": "2"}'
+          schema:
+            type: string
+        - in: query
+          name: oculyze_app_id
+          required: false
+          description: Specify which application is used. 1 - BB1, 2 - BB2, 3 - MUH, 4 - FW/WINE, 5 - GENERIC
+          schema:
+            type: integer
+        - in: query
+          name: oculyze_device_mmsdk
+          required: false
+          description: '3 separate fields (Build.MANUFACTURER, Build.MODEL and Build.VERSION.SDK_INT) identifying the client device; usage example Huawei:Mate40:30.0.5'
+          schema:
+            type: string
+        - in: query
+          name: state
+          required: false
+          description: States are set by the backend to ensure a proper flow of the processing; client site sets only state 1 after all tasks are added to the batch to trigger further progress on the backend e.g. result aggregation. -1 - ERROR, 0 - IN_PROGRESS, 1 - UPLOAD_COMPLETE, 2 - RESULT_READY , 254 - ABORTED_BY_USER, 255 - ABORTED_BY_SYSTEM
+          schema:
+            type: integer
+      responses:
+        '201':    # status code
+          description: A JSON array containing infos on the batch
+    get:
+      tags:
+      - yeast
+      summary: Read all batches associated to a primary
+      description: Read all batches that are linked to a primary batch and filter for different informations. 
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: primary_id
+          required: true
+          description: id of the primary batch
+          schema:
+            type: string
+        - name: If-Modified-Since
+          in: header
+          description: 'filter for batches since included date. Example -  Fri, 23 Sep 2022 00:00:00 GMT'
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: name
+          required: false
+          description: filter for a name
+          schema:
+            type: string
+        - in: query
+          name: desc
+          required: false
+          description: filter for the description
+          schema:
+            type: string
+        - in: query
+          name: user_id
+          required: false
+          description: filter for a specific user id if you are admin of the concerned user group (for handling of multiple accounts)
+          schema:
+            type: string
+        - in: query
+          name: group
+          required: false
+          description: filter for specific groups, admin rights needed
+          schema:
+            type: string
+        - in: query
+          name: method
+          required: false
+          description: filter for a specific method
+          schema:
+            type: string
+        - in: query
+          name: methods
+          required: false
+          description: filter for a specific methods seperated by , e.g. 30,31
+          schema:
+            type: string
+        - in: query
+          name: method_attributes
+          required: false
+          description: 'filter for method_attributes, usage example - {"analysis_level": "1", "stain": "2"}'
+          schema:
+            type: string
+        - in: query
+          name: page
+          required: false
+          description: filter for the page number
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          description: specify the number of analysis per requested page
+          schema:
+            type: integer
+        - in: query
+          name: count
+          required: false
+          description: 'Get the count of the query result. default - false' 
+          schema:
+            type: boolean
+        - in: query
+          name: state
+          required: false
+          description: filter for specific state of the analysis -1 - ERROR, 0 - IN_PROGRESS, 1 - UPLOAD_COMPLETE, 2 - RESULT_READY , 254 - ABORTED_BY_USER, 255 - ABORTED_BY_SYSTEM
+          schema:
+            type: integer
+        - in: query
+          name: states
+          required: false
+          description: filter for different states of the analysis, mutually exclusive with parameter state, e.g. 1,2
+          schema:
+            type: string
+        - in: query
+          name: min_viability
+          required: false
+          description: filter for minimum viability
+          schema:
+            type: integer
+        - in: query
+          name: max_viability
+          required: false
+          description: filter for maximal viability
+          schema:
+            type: integer
+        - in: query
+          name: min_concentration
+          required: false
+          description: filter for minimum concentration
+          schema:
+            type: integer
+        - in: query
+          name: max_concentration
+          required: false
+          description: filter for maximal concentration
+          schema:
+            type: integer
+        - in: query
+          name: st_date_creation
+          required: false
+          description: 'filter for earliest date e.g. Tue, 23 Feb 2021 11:43:00 GMT or 20220301 '
+          schema:
+            type: string
+        - in: query
+          name: end_date_creation
+          required: false
+          description: 'filter for latest date e.g. Tue, 23 Feb 2021 11:43:00 GMT or 20220307'
+          schema:
+            type: integer
+        - in: query
+          name: oculyze_app_id
+          required: false
+          description: Filter for used application. 1 - BB1, 2 - BB2, 3 - MUH, 4 - FW/WINE, 5 - GENERIC
+          schema:
+            type: integer
+        - in: query
+          name: tags
+          required: false
+          description: TODO - Does this do anything?
+          schema:
+            type: string
+        - in: query
+          name: tag_search_key
+          required: false
+          description: 'Filter for tags of trackings - currently its only possible to filter for one tag:label pair at the time - yeast_generation": ["1"]; currently fixed tags - tank, yeast_strain, yeast_generation, yeast_brand'
+          schema:
+            type: string
+      responses:
+        '201':    # status code
+          description: A JSON array containing infos on the batch
+          
+  /fermentation-batch-activation/{batch_id}:
+    put:
+      tags:
+      - yeast
+      summary: De/activate a batch
+      description: Deactivate or activate a batch - Deactivated Batches are excluded from warning calculations
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that should de/activated
+          schema:
+            type: string
+        - in: query
+          name: state
+          required: true
+          description: Toggle between 2 - RESULT_READY and 10 - RESULT_READY_DISABLED
+          schema:
+            type: integer
+      responses:
+        '200':    # status code
+          description: A JSON array containing infos on the batch    
+  
+  /wine_primaries:
+    post:
+      tags:
+      - fw tracking
+      summary: Create a primary batch
+      description: Create a primary batch that holds different information (e.g name, tags...) of a tracking. Primary batches hold all batches added to a tracking.
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: query
+          name: method
+          required: true
+          description: HAS TO BE SET BUT IS NOT USED LATER! 30 - YEAST_2_CONC_VIAB (Beer yeast analysis for concentration & viability); 31 - YEAST_2_CONC (Beer yeast analysis for only concentration); 32 - YEAST_2_CONC_BRETT (Beer yeast analysis specific for Brettanomyces; only analyzes concentration); 4  - YEAST_MANUAL_CNT (Cells are counted by hand. No image analysis is started), 40 - WINE_CONC_VIAB (Wine yeast analysis for concentration & viability), 41 - WINE_CONC (Wine yeast analysis for concentration), 42 - WINE_CONC_BRETT (Wine yeast analysis specific for Brettanomyces type; only analyzes concentration), 43 - WINE_MANUAL_CNT (Cells are counted by hand. No image recognition is started), 1 - Deprecated YEAST_CONC of BB1, 2 - DEPRECATED YEAST_CONC_VIAB of BB1
+          schema:
+            type: integer
+        - in: query
+          name: name
+          required: false
+          description: Name of analysis
+          schema:
+            type: string
+        - in: query
+          name: desc
+          required: false
+          description: Additional descriptions for analysis
+          schema:
+            type: string
+        - in: query
+          name: app_version
+          required: false
+          description: app_version
+          schema:
+            type: string
+        - in: query
+          name: created_locally_at
+          required: false
+          description: created_locally_at
+          schema:
+            type: string
+        - in: query
+          name: fermented_at
+          required: true
+          description: fermented_at e.g. Tue, 23 Feb 2021 11:43:00 GMT or 20220307
+          schema:
+            type: string
+        - in: query
+          name: method_attributes
+          required: false
+          description: 'Allows to set stain and size ranges of the analysis: 1 - S (default in FW), 2 - M (default in BB), 3 - L, 4 - ALL and stain: 1 - Methylene Blue, 2 - Methylene Violet (default); usage {"analysis_level": "1", "stain": "2"}'
+          schema:
+            type: string
+        - in: query
+          name: oculyze_app_id
+          required: false
+          description: Specify which application is used. 1 - BB1, 2 - BB2, 3 - MUH, 4 - FW/WINE, 5 - GENERIC
+          schema:
+            type: integer
+        - in: query
+          name: tags
+          required: false
+          description: 'Add different tags as tag:label pair to a measurement. IMPORTANT: The tag oculyze_wine_type has to be set to enable the different warning models (options are white, red, rose, sparkling, blanc de Noir, other and &lt;not set&gt; - usage example "tag": {"oculyze_wine_type":["white"], "tank_volume": ["60 L"], "oculyze_wine_type_freetext": ["Speckbirne stark entschleimt"], "tank": ["3"], "grape_variety": ["Speckbirne"], "yeast_brand": ["Erbslöh"], "yeast_strain": ["Freddo"], "nutrients_at_fill_in": ["Erbslöh Vitadrive"], "additives_at_fill_in": ["XX"], "vineyard_source":["Bernkasteler Doctor"]}'
+          schema:
+            type: string
+        - in: query
+          name: oculyze_device_mmsdk
+          required: false
+          description: '3 separate fields (Build.MANUFACTURER, Build.MODEL and Build.VERSION.SDK_INT) identifying the client device; usage example Huawei:Mate40:30.0.5'
+          schema:
+            type: string
+        - in: query
+          name: scale_type
+          required: false
+          description: ONLY FW - 0 Oechsle, 1 Brix (default), 2 KMW, 3 BAUME, 4 DENSITY_GPL (gpl stands for gramm per liter)
+          schema:
+            type: integer
+      responses:
+        '200':    # status code
+          description: TODO
+    get: 
+      tags:
+      - fw tracking
+      summary: Read informations on existing primary batches
+      description: Read informations on existing primary batches and filter for different parameters.
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - name: If-Modified-Since
+          in: header
+          description: 'filter for primary batches since included date. Example -  Fri, 23 Sep 2022 00:00:00 GMT'
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: name
+          required: false
+          description: filter for a name
+          schema:
+            type: string
+        - in: query
+          name: desc
+          required: false
+          description: filter for the description
+          schema:
+            type: string
+        - in: query
+          name: user_id
+          required: false
+          description: filter for a specific user id if you are admin of the concerned user group (for handling of multiple accounts)
+          schema:
+            type: string
+        - in: query
+          name: group
+          required: false
+          description: filter for specific groups, admin rights needed
+          schema:
+            type: string
+        - in: query
+          name: method
+          required: false
+          description: filter for a specific method
+          schema:
+            type: string
+        - in: query
+          name: methods
+          required: false
+          description: filter for a specific methods seperated by , e.g. 30,31
+          schema:
+            type: string
+        - in: query
+          name: method_attributes
+          required: false
+          description: 'filter for method_attributes, usage example - {"analysis_level": "1", "stain": "2"}'
+          schema:
+            type: string
+        - in: query
+          name: page
+          required: false
+          description: filter for the page number
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          description: specify the number of analysis per requested page
+          schema:
+            type: integer
+        - in: query
+          name: count
+          required: false
+          description: 'Get the count of the query result. default - false' 
+          schema:
+            type: boolean
+        - in: query
+          name: state
+          required: false
+          description: filter for specific state of the primary batch - 4 - FERMENTATION_ONGOING, 5 - USER_FERMENTATION_COMPLETED, 6 - FERMENTATION_COMPLETE, -1 - ERROR, -254 - ABORTED_BY_USER, 255 - ABORTED_BY_SYSTEM
+          schema:
+            type: integer
+        - in: query
+          name: states
+          required: false
+          description: filter for different states of the analysis, mutually exclusive with parameter state, e.g. 1,2
+          schema:
+            type: string
+        - in: query
+          name: min_viability
+          required: false
+          description: filter for minimum viability
+          schema:
+            type: integer
+        - in: query
+          name: max_viability
+          required: false
+          description: filter for maximal viability
+          schema:
+            type: integer
+        - in: query
+          name: min_concentration
+          required: false
+          description: filter for minimum concentration
+          schema:
+            type: integer
+        - in: query
+          name: max_concentration
+          required: false
+          description: filter for maximal concentration
+          schema:
+            type: integer
+        - in: query
+          name: st_date_creation
+          required: false
+          description: 'filter for earliest date e.g. Tue, 23 Feb 2021 11:43:00 GMT or 20220301 '
+          schema:
+            type: string
+        - in: query
+          name: end_date_creation
+          required: false
+          description: 'filter for latest date e.g. Tue, 23 Feb 2021 11:43:00 GMT or 20220307'
+          schema:
+            type: integer
+        - in: query
+          name: oculyze_app_id
+          required: false
+          description: Filter for used application. 1 - BB1, 2 - BB2, 3 - MUH, 4 - FW/WINE, 5 - GENERIC
+          schema:
+            type: integer
+        - in: query
+          name: tags
+          required: false
+          description: TODO - Does this do anything?
+          schema:
+            type: string
+        - in: query
+          name: tag_search_key
+          required: false
+          description: 'Filter for tags of trackings - currently its only possible to filter for one tag:label pair at the time; usage - oculyze_wine_type": ["white"]; currently fixed tags - oculyze_wine_type, tank_volume, "oculyze_wine_type_freetext, tank, grape_variety, yeast_brand,yeast_strain. nutrients_at_fill_in, additives_at_fill_in, vineyard_source' 
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: TODO
+  
+  /wine_primary/{primary_id}:
+    get:
+      tags:
+      - fw tracking
+      summary: Read all informations of a primary batch
+      description: Read all informations of a primary batch.
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: primary_id
+          required: true
+          description: id of the primary batch
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: TODO
+    put:
+      tags:
+      - fw tracking
+      summary: Update a primary batch
+      description: Update fields of a primary batch.
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: primary_id
+          required: true
+          description: id of the primary batch
+          schema:
+            type: string
+        - in: query
+          name: state
+          required: false
+          description: Set the state of a primary to finalize a fermentation (no batches can be added anymore). State can be reversed but client side this is currently not used. 6 - FERMENTATION_COMPLETE, 4 - FERMENTATION_ONGOING
+          schema:
+            type: integer
+        - in: query
+          name: name
+          required: false
+          description: edit the name
+          schema:
+            type: string
+        - in: query
+          name: desc
+          required: false
+          description: edit the description
+          schema:
+            type: string
+        - in: query
+          name: app_version
+          required: false
+          description: app_version
+          schema:
+            type: string
+        - in: query
+          name: created_locally_at
+          required: false
+          description: created_locally_at
+          schema:
+            type: string
+        - in: query
+          name: fermented_at
+          required: false
+          description: fermented_at e.g. Tue, 23 Feb 2021 11:43:00 GMT or 20220307
+          schema:
+            type: string
+        - in: query
+          name: oculyze_app_id
+          required: false
+          description: Specify which application is used. 1 - BB1, 2 - BB2, 3 - MUH, 4 - FW/WINE, 5 - GENERIC
+          schema:
+            type: integer
+        - in: query
+          name: tags
+          required: false
+          description: 'Add different tags as tag:label pair to a measurement. IMPORTANT: The tag oculyze_wine_type has to be set to enable the different warning models (options are white, red, rose, sparkling, blanc de Noir, other and &lt;not set&gt; - usage example { "tag": {"oculyze_wine_type":["white"], "tank_volume": ["60 L"], "oculyze_wine_type_freetext": ["Speckbirne stark entschleimt"], "tank": ["3"], "grape_variety": ["Speckbirne"], "yeast_brand": ["Erbslöh"], "yeast_strain": ["Freddo"], "nutrients_at_fill_in": ["Erbslöh Vitadrive"] }}'
+          schema:
+            type: string
+        - in: query
+          name: oculyze_device_mmsdk
+          required: false
+          description: '3 separate fields (Build.MANUFACTURER, Build.MODEL and Build.VERSION.SDK_INT) identifying the client device; usage example Huawei:Mate40:30.0.5'
+          schema:
+            type: string
+        - in: query
+          name: scale_type
+          required: false
+          description: ONLY FW - 0 Oechsle, 1 Brix (default), 2 KMW, 3 BAUME, 4 DENSITY_GPL (gpl stands for gramm per liter)
+          schema:
+            type: integer
+      responses:
+        '200':    # status code
+          description: TODO
+  
+  /wine_primary/{primary_id}/{field}:
+    get:
+      tags:
+      - fw tracking
+      summary: Read specifc informations of a primary batch
+      description: Read specific informations of a primary batch.
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: primary_id
+          required: true
+          description: id of the primary batch
+          schema:
+            type: string
+        - in: path
+          name: field
+          required: true
+          description: filed information is needed for e.g.   name, desc, app_version, oculyze_app_id, fermented_at, created_locally_at, method, method_attributes, scale_type, tags, state oculyze_device_mmsdk
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: TODO
+          
+  /wine_primary/{primary_id}/readings:
+    post:
+      tags:
+      - fw tracking
+      summary: Create a batch associated to a primary
+      description: Create a batch that holds different information (e.g name, dilution...) for an analysis and is linked to a primary batch. 
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: primary_id
+          required: true
+          description: id of the primary batch
+          schema:
+            type: string
+        - in: query
+          name: method
+          required: true
+          description: 40 - WINE_CONC_VIAB (Wine yeast analysis for concentration & viability), 41 - WINE_CONC (Wine yeast analysis for concentration), 42 - WINE_CONC_BRETT (Wine yeast analysis specific for Brettanomyces type; only analyzes concentration), 43 - WINE_MANUAL_CNT (Cells are counted by hand. No image recognition is started)
+          schema:
+            type: integer
+        - in: query
+          name: name
+          required: false
+          description: Name of analysis
+          schema:
+            type: string
+        - in: query
+          name: desc
+          required: false
+          description: Additional descriptions for analysis
+          schema:
+            type: string
+        - in: query
+          name: app_version
+          required: false
+          description: app_version
+          schema:
+            type: string
+        - in: query
+          name: created_locally_at
+          required: false
+          description: created_locally_at
+          schema:
+            type: string
+        - in: query
+          name: fermented_at
+          required: false
+          description: fermented_at
+          schema:
+            type: string
+        - in: query
+          name: method_attributes
+          required: false
+          description: 'Allows to set stain and size ranges of the analysis: 1 - S (default in FW), 2 - M (default in BB), 3 - L, 4 - ALL and stain: 1 - Methylene Blue, 2 - Methylene Violet (default); usage {"analysis_level": "1", "stain": "2"}'
+          schema:
+            type: string
+        - in: query
+          name: oculyze_app_id
+          required: false
+          description: Specify which application is used. 1 - BB1, 2 - BB2, 3 - MUH, 4 - FW/WINE, 5 - GENERIC
+          schema:
+            type: integer
+        - in: query
+          name: oculyze_device_mmsdk
+          required: false
+          description: '3 separate fields (Build.MANUFACTURER, Build.MODEL and Build.VERSION.SDK_INT) identifying the client device; usage example Huawei:Mate40:30.0.5'
+          schema:
+            type: string
+        - in: query
+          name: state
+          required: false
+          description: States are set by the backend to ensure a proper flow of the processing; client site sets only state 1 after all tasks are added to the batch to trigger further progress on the backend e.g. result aggregation. -1 - ERROR, 0 - IN_PROGRESS, 7 - WINE_UPLOAD_COMPLETE, 8 - WINE_RESULT_READY , 254 - ABORTED_BY_USER, 255 - ABORTED_BY_SYSTEM
+          schema:
+            type: integer
+      responses:
+        '201':    # status code
+          description: A JSON array containing infos on the batch
+    get:
+      tags:
+      - fw tracking
+      summary: Read all batches associated to a primary
+      description: Read all batches that are linked to a primary batch and filter for different informations. 
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: primary_id
+          required: true
+          description: id of the primary batch
+          schema:
+            type: string
+        - name: If-Modified-Since
+          in: header
+          description: 'filter for batches since included date. Example -  Fri, 23 Sep 2022 00:00:00 GMT'
+          required: false
+          schema:
+            type: string
+        - in: query
+          name: name
+          required: false
+          description: filter for a name
+          schema:
+            type: string
+        - in: query
+          name: desc
+          required: false
+          description: filter for the description
+          schema:
+            type: string
+        - in: query
+          name: user_id
+          required: false
+          description: filter for a specific user id if you are admin of the concerned user group (for handling of multiple accounts)
+          schema:
+            type: string
+        - in: query
+          name: group
+          required: false
+          description: filter for specific groups, admin rights needed
+          schema:
+            type: string
+        - in: query
+          name: method
+          required: false
+          description: filter for a specific method
+          schema:
+            type: string
+        - in: query
+          name: methods
+          required: false
+          description: filter for a specific methods seperated by , e.g. 30,31
+          schema:
+            type: string
+        - in: query
+          name: method_attributes
+          required: false
+          description: 'filter for method_attributes, usage example - {"analysis_level": "1", "stain": "2"}'
+          schema:
+            type: string
+        - in: query
+          name: page
+          required: false
+          description: filter for the page number
+          schema:
+            type: integer
+        - in: query
+          name: page_size
+          required: false
+          description: specify the number of analysis per requested page
+          schema:
+            type: integer
+        - in: query
+          name: count
+          required: false
+          description: 'Get the count of the query result. default - false' 
+          schema:
+            type: boolean
+        - in: query
+          name: state
+          required: false
+          description: filter for specific state of the analysis -1 - ERROR, 0 - IN_PROGRESS, 1 - UPLOAD_COMPLETE, 2 - RESULT_READY , 254 - ABORTED_BY_USER, 255 - ABORTED_BY_SYSTEM
+          schema:
+            type: integer
+        - in: query
+          name: states
+          required: false
+          description: filter for different states of the analysis, mutually exclusive with parameter state, e.g. 1,2
+          schema:
+            type: string
+        - in: query
+          name: min_viability
+          required: false
+          description: filter for minimum viability
+          schema:
+            type: integer
+        - in: query
+          name: max_viability
+          required: false
+          description: filter for maximal viability
+          schema:
+            type: integer
+        - in: query
+          name: min_concentration
+          required: false
+          description: filter for minimum concentration
+          schema:
+            type: integer
+        - in: query
+          name: max_concentration
+          required: false
+          description: filter for maximal concentration
+          schema:
+            type: integer
+        - in: query
+          name: st_date_creation
+          required: false
+          description: 'filter for earliest date e.g. Tue, 23 Feb 2021 11:43:00 GMT or 20220301 '
+          schema:
+            type: string
+        - in: query
+          name: end_date_creation
+          required: false
+          description: 'filter for latest date e.g. Tue, 23 Feb 2021 11:43:00 GMT or 20220307'
+          schema:
+            type: integer
+        - in: query
+          name: oculyze_app_id
+          required: false
+          description: Filter for used application. 1 - BB1, 2 - BB2, 3 - MUH, 4 - FW/WINE, 5 - GENERIC
+          schema:
+            type: integer
+        - in: query
+          name: tags
+          required: false
+          description: TODO - Does this do anything?
+          schema:
+            type: string
+        - in: query
+          name: tag_search_key
+          required: false
+          description: 'Filter for tags of trackings - currently its only possible to filter for one tag:label pair at the time - "oculyze_wine_type": ["white"]; currently fixed tags - oculyze_wine_type, tank_volume, oculyze_wine_type_freetext, tank, grape_variety, yeast_brand, yeast_strain, nutrients_at_fill_in, additives_at_fill_in ' 
+          schema:
+            type: string
+      responses:
+        '201':    # status code
+          description: A JSON array containing infos on the batch
+          
+  /wine_reading/{batch_id}:
+    get:
+      tags:
+      - fw tracking
+      summary: Read a batch
+      description: Read a batch that holds different information (e.g name, dilution, results...) for an analysis. 
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that should be read
+          schema:
+            type: string
+
+      responses:
+        '201':    # status code
+          description: A JSON array containing infos on the batch
+    put:
+      tags:
+      - fw tracking
+      summary: Modify a batch
+      description: Modify a batch that holds different information (e.g name, dilution...) for an analysis and trigger aggregation of results for the images (managed via tasks) assosiated with the batch. 
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: query
+          name: method
+          required: false
+          description: 40 - WINE_CONC_VIAB (Wine yeast analysis for concentration & viability), 41 - WINE_CONC (Wine yeast analysis for concentration), 42 - WINE_CONC_BRETT (Wine yeast analysis specific for Brettanomyces type; only analyzes concentration), 43 - WINE_MANUAL_CNT (Cells are counted by hand. No image recognition is started)
+          schema:
+            type: integer
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that should be modified
+          schema:
+            type: string
+        - in: query
+          name: name
+          required: false
+          description: Edit the name of an analysis
+          schema:
+            type: string
+        - in: query
+          name: desc
+          required: false
+          description: Edit the additional descriptions for analysis
+          schema:
+            type: string
+        - in: query
+          name: app_version
+          required: false
+          description: Edit the app_version
+          schema:
+            type: string
+        - in: query
+          name: created_locally_at
+          required: false
+          description: Edit the local creation time
+          schema:
+            type: string
+        - in: query
+          name: Edit fermented_at
+          required: false
+          description: fermented_at
+          schema:
+            type: string
+        - in: query
+          name: oculyze_app_id
+          required: false
+          description: Edit which application is used. 1 - BB1, 2 - BB2, 3 - MUH, 4 - FW/WINE, 5 - GENERIC
+          schema:
+            type: integer
+        - in: query
+          name: state
+          required: false
+          description: States are set by the backend to ensure a proper flow of the processing; client site sets only state 7 after all tasks are added to the batch to trigger further progress on the backend e.g. result aggregation. -1 - ERROR, 0 - IN_PROGRESS, 7 - WINE_UPLOAD_COMPLETED, 8 - WINE_RESULT_READY, 254 - ABORTED_BY_USER, 255 - ABORTED_BY_SYSTEM
+          schema:
+            type: integer
+        - in: query
+          name: image_volume
+          required: false
+          description: Edit the volume of the analysed image, calculated on client side. batch.image_volume = (calculateImageArea() * UserHelper.manager().getChamberHeight()) / 1000;
+          schema:
+            type: integer
+        - in: query
+          name: dilution_sample_1
+          required: false
+          description: Specify the sample part when diluting the sample, e.g. 1
+          schema:
+            type: integer
+        - in: query
+          name: dilution_sample_2
+          required: false
+          description: Specify the water part when diluting the sample, e.g. 99
+          schema:
+            type: integer
+        - in: query
+          name: dilution_stain_1
+          required: false
+          description: Specify the sample part when staining the sample, e.g. 1
+          schema:
+            type: integer
+        - in: query
+          name: dilution_stain_2
+          required: false
+          description: Specify the stain part when stainig the sample, e.g. 1
+          schema:
+            type: integer
+        - in: query
+          name: dilution_sample
+          required: false
+          description: Specify the sample dilution by vol_sample / (vol_sample + vol_water)
+          deprecated: true
+          schema:
+            type: integer
+        - in: query
+          name: dilution_stain
+          required: false
+          description: Specify the sample dilution of the stain by by vol_sample_dil / (vol_sample_dil + vol_stain)
+          deprecated: true
+          schema:
+            type: integer
+        - in: query
+          name: density
+          required: false
+          description: TODO
+          schema:
+            type: integer
+        - in: query
+          name: turbidity
+          required: false
+          description: TODO
+          schema:
+            type: integer
+        - in: query
+          name: temperature
+          required: false
+          description: TODO
+          schema:
+            type: integer
+        - in: query
+          name: scale_type
+          required: false
+          description: TODO
+          schema:
+            type: integer
+      responses:
+        '201':    # status code
+          description: A JSON array containing infos on the batch          
+  
+  /wine_reading_activation/{batch_id}:
+    put:
+      tags:
+      - fw tracking
+      summary: De/activate a batch
+      description: Deactivate or activate a batch - Deactivated Batches are excluded from warning calculations
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that should de/activated
+          schema:
+            type: string
+        - in: query
+          name: state
+          required: true
+          description: Toggle between 8 - WINE_RESULT_READY and 9 - WINE_RESULT_READY_DISABLED
+          schema:
+            type: integer
+      responses:
+        '200':    # status code
+          description: A JSON array containing infos on the batch     
+          
+  /wine_reading/{batch_id}/tasks:
+    put:
+      tags:
+      - fw tracking
+      summary: Create a task
+      description: Create a task that holds single images and the assiciated results from image analysis
+      security: 
+        - oculyze_basic: []
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+                manual_stat:
+                  description: 'add manual counting results, Example - {"countDead": 9, "countAlive": 31, "countOther": 1, "countTotal": 46}'
+                  type: string
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that holds the respective task
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: A JSON array containing infos on the task
+    get:
+      tags:
+      - fw tracking
+      summary: Read all tasks related to a batch
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that holds the respective task
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: A JSON array containing infos on the task
+          
+  /wine_reading/{batch_id}/tasks/{task_id}:
+    get:
+      tags:
+      - fw tracking
+      summary: Read all informations of a task
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that holds the respective task
+          schema:
+            type: string
+        - in: path
+          name: task_id
+          required: true
+          description: task id of the task that should be read
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: A JSON array containing infos on the task
+    put:
+      tags:
+      - fw tracking
+      summary: Edit detections of a task - !State is set to RESULT_READY!
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that holds the respective task
+          schema:
+            type: string
+        - in: path
+          name: task_id
+          required: true
+          description: task id of the task that should be read
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                detections:
+                  description: 'detections that should be set for the task. Example - detections: [[0.0, 0.338181823, 0.87318182, 0.0245454554, 0.0204545446]]'
+                  type: string
+      responses:
+        '200':    # status code
+          description: A JSON array containing infos on the task
+          
+  /wine_reading/{batch_id}/tasks/{task_id}/{field}:
+    get:
+      tags:
+      - fw tracking
+      summary: Read different informations of a task
+      description: Reads infos of single fields of the task (e.g id, result_stats or state)
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that holds the respective task
+          schema:
+            type: string
+        - in: path
+          name: task_id
+          required: true
+          description: task id of the task that should be read
+          schema:
+            type: string
+        - in: path
+          name: field
+          required: true
+          description: id, state
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: A JSON array containing infos on the task
+          
+  /wine_reading/{batch_id}/tasks/{task_id}/input_image:
+    get:
+      tags:
+      - fw tracking
+      summary: Download input image
+      description: Download the input image of a task in different sizes
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that holds the respective task
+          schema:
+            type: string
+        - in: path
+          name: task_id
+          required: true
+          description: task id of the task that should be read
+          schema:
+            type: string
+        - in: query
+          name: size
+          required: false
+          description: set to 'thumbnail' to get a smaller version
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: A jpeg image
+          
+  /wine_reading/{batch_id}/tasks/{task_id}/result_image:
+    get:
+      tags:
+      - fw tracking
+      summary: Download result image
+      description: Download the result image of a task in different sizes
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch that holds the respective task
+          schema:
+            type: string
+        - in: path
+          name: task_id
+          required: true
+          description: task id of the task that should be read
+          schema:
+            type: string
+        - in: query
+          name: size
+          required: false
+          description: set to 'thumbnail' to get a smaller version
+          schema:
+            type: string
+      responses:
+        '200':    # status code
+          description: A jpeg image
+          
+  /tag/{batch_id}:
+    post:
+      tags:
+      - seperate tags
+      summary: Add tags to a batch
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch
+          schema:
+            type: string
+        - in: query
+          name: tag
+          required: false
+          description: 'add tags - example {"tag": {"yeast": ["Belgian-Mix-10"], "beer": ["ale"], "tank": ["12"]}}'
+          schema:
+            type: string
+      responses:
+        '201':    # status code
+          description: A JSON array containing infos on the batch
+    get:
+      tags:
+      - seperate tags
+      summary: Read tags of a batch
+      security: 
+        - oculyze_basic: []
+      parameters:
+        - in: path
+          name: batch_id
+          required: true
+          description: batch id of the batch
+          schema:
+            type: string
+      responses:
+        '201':    # status code
+          description: A JSON array containing infos on the batch
+          
+  /tags:
+    get:
+      tags:
+      - seperate tags
+      summary: Read all batches with tags
+      security: 
+        - oculyze_basic: []
+      responses:
+        '200':    # status code
+          description: TODO
+  
+  /tagdefaults:
+    get:
+      tags:
+      - seperate tags
+      summary: Get tag defaults
+      security: 
+        - oculyze_basic: []
+      responses:
+        '200':    # status code
+          description: TODO
+
+components:
+  securitySchemes:
+    oculyze_basic:
+      type: http
+      scheme: basic
+
+
