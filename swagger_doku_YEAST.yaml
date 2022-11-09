@@ -807,7 +807,7 @@ paths:
         - in: query
           name: include_batch_count
           required: false
-          description: 'Get the count of the query result included in the fermentation data. 0 - false, 1 true' 
+          description: 'Get the count of the query result included in the fermentation data. 0 - false, 1 - true' 
           schema:
             type: integer
         - in: query
