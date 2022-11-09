@@ -801,9 +801,15 @@ paths:
         - in: query
           name: count
           required: false
-          description: 'Get the count of the query result. default - false' 
+          description: 'Get only the count of the query results. default - false' 
           schema:
             type: boolean
+        - in: query
+          name: include_batch_count
+          required: false
+          description: 'Get the count of the query result included in the fermentation data. 0 - false, 1 true' 
+          schema:
+            type: integer
         - in: query
           name: state
           required: false
@@ -968,7 +974,7 @@ paths:
             type: integer
         - in: query
           name: is_favourite
-          desription: mark the primary batch as a favorite batch 
+          description: mark the primary batch as a favorite batch 
           required: false
           schema:
             type: boolean
